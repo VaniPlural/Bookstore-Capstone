@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Layout from '../components/Layout';
 import BookCard from '../components/BookCard';
+import EditBookModal from '../components/EditBookModal';
 
 const BooksPage = () => {
   const [books, setBooks] = useState([]);
@@ -9,6 +10,10 @@ const BooksPage = () => {
   const [booksPerPage] = useState(8); // Number of books to display per page
   const [sortBy, setSortBy] = useState('title'); // Default sort by title
   const [searchTerm, setSearchTerm] = useState('');
+  const [authors, setAuthors] = useState([]);
+  const [genres, setGenres] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedBook, setSelectedBook] = useState(null);
 
   useEffect(() => {
     const fetchBooks = async () => {
@@ -27,6 +32,37 @@ const BooksPage = () => {
     };
 
     fetchBooks();
+  }, []);
+
+  useEffect(() => {
+    const fetchAuthors = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/get/authors');
+        if (!response.ok) {
+          throw new Error('Failed to fetch authors');
+        }
+        const data = await response.json();
+        setAuthors(data);
+      } catch (error) {
+        console.error('Error fetching authors:', error);
+      }
+    };
+
+    const fetchGenres = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/get/genres');
+        if (!response.ok) {
+          throw new Error('Failed to fetch genres');
+        }
+        const data = await response.json();
+        setGenres(data);
+      } catch (error) {
+        console.error('Error fetching genres:', error);
+      }
+    };
+
+    fetchAuthors();
+    fetchGenres();
   }, []);
 
   // Sorting books based on sortBy criteria
@@ -72,6 +108,23 @@ const BooksPage = () => {
   const handleSortChange = (e) => {
     setSortBy(e.target.value);
     setCurrentPage(1); // Reset to first page when sorting changes
+  };
+
+  // Handle edit book
+  const handleEditBook = (book) => {
+    setSelectedBook(book);
+    setIsModalOpen(true);
+  };
+
+  // Handle save edited book
+  const handleSaveBook = (editedBook) => {
+    // Update book in books array
+    const updatedBooks = books.map(b =>
+      b.id === editedBook.id ? editedBook : b
+    );
+    setBooks(updatedBooks);
+    setIsModalOpen(false);
+    setSelectedBook(null);
   };
 
   if (loading) {
@@ -127,7 +180,8 @@ const BooksPage = () => {
             genre={book.genre.genre_name}
             price={book.price}
             publicationDate={book.publication_date}
-            imageUrl="https://via.placeholder.com/100"
+            imageUrl={book.imageUrl}
+            onEdit={() => handleEditBook(book)}
             className="w-1/2 md:w-1/3 lg:w-1/4 xl:w-1/4 p-4"
           />
         ))}
@@ -168,6 +222,18 @@ const BooksPage = () => {
           </ul>
         </nav>
       </div>
+
+      {/* Edit Book Modal */}
+      {isModalOpen && (
+        <EditBookModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSave={handleSaveBook}
+          book={selectedBook}
+          authors={authors}
+          genres={genres}
+        />
+      )}
     </Layout>
   );
 };
