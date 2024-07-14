@@ -75,8 +75,8 @@ const BooksPage = () => {
       {/* Pagination */}
       <div className="flex justify-center mt-4">
         <nav className="block">
-          <ul className="flex pl-0 rounded list-none flex-wrap">
-            <li className="relative block py-2 px-3 leading-tight bg-white border border-gray-300 text-blue-700 border-r-0 ml-0 rounded-l">
+          <ul className="flex pl-0 rounded list-none flex-wrap border border-gray-300">
+            <li className="relative block py-2 px-3 leading-tight bg-white border border-gray-300 text-blue-700 rounded-l">
               <button
                 className="page-link"
                 onClick={() => paginate(currentPage - 1)}
@@ -86,7 +86,7 @@ const BooksPage = () => {
               </button>
             </li>
             {Array.from({ length: totalPages }, (_, i) => (
-              <li key={i} className="relative block py-2 px-3 leading-tight bg-white border border-gray-300 text-blue-700 border-r-0">
+              <li key={i} className="relative block py-2 px-3 leading-tight bg-white border border-gray-300 text-blue-700">
                 <button
                   className={`page-link ${currentPage === i + 1 ? 'bg-blue-500 text-white' : ''}`}
                   onClick={() => paginate(i + 1)}
@@ -95,7 +95,7 @@ const BooksPage = () => {
                 </button>
               </li>
             ))}
-            <li className="relative block py-2 px-3 leading-tight bg-white border border-gray-300 text-blue-700 border-r-0 rounded-r">
+            <li className="relative block py-2 px-3 leading-tight bg-white border border-gray-300 text-blue-700 rounded-r">
               <button
                 className="page-link"
                 onClick={() => paginate(currentPage + 1)}
@@ -112,4 +112,3 @@ const BooksPage = () => {
 };
 
 export default BooksPage;
-
