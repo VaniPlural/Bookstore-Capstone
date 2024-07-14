@@ -7,6 +7,8 @@ const BooksPage = () => {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [booksPerPage] = useState(8); // Number of books to display per page
+  const [sortBy, setSortBy] = useState('title'); // Default sort by title
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const fetchBooks = async () => {
@@ -27,13 +29,34 @@ const BooksPage = () => {
     fetchBooks();
   }, []);
 
+  // Sorting books based on sortBy criteria
+  const sortedBooks = [...books].sort((a, b) => {
+    if (sortBy === 'title') {
+      return a.title.localeCompare(b.title);
+    } else if (sortBy === 'author') {
+      return a.author.name.localeCompare(b.author.name);
+    } else if (sortBy === 'price') {
+      return parseFloat(a.price) - parseFloat(b.price);
+    } else if (sortBy === 'publication_date') {
+      return new Date(a.publication_date) - new Date(b.publication_date);
+    } else if (sortBy === 'genre') {
+      return a.genre.genre_name.localeCompare(b.genre.genre_name);
+    }
+    return 0;
+  });
+
+  // Filter books based on search term
+  const filteredBooks = sortedBooks.filter(book =>
+    book.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   // Calculate number of pages
-  const totalPages = Math.ceil(books.length / booksPerPage);
+  const totalPages = Math.ceil(filteredBooks.length / booksPerPage);
 
   // Get current books
   const indexOfLastBook = currentPage * booksPerPage;
   const indexOfFirstBook = indexOfLastBook - booksPerPage;
-  const currentBooks = books.slice(indexOfFirstBook, indexOfLastBook);
+  const currentBooks = filteredBooks.slice(indexOfFirstBook, indexOfLastBook);
 
   // Change page
   const paginate = (pageNumber) => {
@@ -43,6 +66,12 @@ const BooksPage = () => {
       pageNumber = totalPages;
     }
     setCurrentPage(pageNumber);
+  };
+
+  // Handle sorting change
+  const handleSortChange = (e) => {
+    setSortBy(e.target.value);
+    setCurrentPage(1); // Reset to first page when sorting changes
   };
 
   if (loading) {
@@ -57,6 +86,38 @@ const BooksPage = () => {
 
   return (
     <Layout>
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4">
+        <div className="mb-2 md:mb-0 md:flex md:space-x-2">
+          <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            Add Book
+          </button>
+          <input
+            type="text"
+            placeholder="Search by title"
+            className="border border-gray-300 rounded py-2 px-4"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <button className="bg-blue-500 hover:bg-blue-700 text-white rounded py-2 px-4">
+            Search
+          </button>
+        </div>
+        <div className="md:ml-auto">
+          <label className="mr-2">Sort by:</label>
+          <select
+            className="border border-gray-300 rounded py-2 px-4"
+            value={sortBy}
+            onChange={handleSortChange}
+          >
+            <option value="title">Title</option>
+            <option value="author">Author</option>
+            <option value="price">Price</option>
+            <option value="publication_date">Publication Date</option>
+            <option value="genre">Genre</option>
+          </select>
+        </div>
+      </div>
+
       <div className="flex flex-wrap justify-center">
         {currentBooks.map((book, index) => (
           <BookCard
