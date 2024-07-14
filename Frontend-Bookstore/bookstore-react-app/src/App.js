@@ -12,6 +12,8 @@ function App() {
         <Route path="/books" element={<BooksPage />} />
         <Route path="/authors" element={<AuthorsPage />} />
         <Route path="/genres" element={<GenresPage />} />
+        <Route path="/authors/:id" component={AuthorsPage} />
+
     </Routes>
   );
 }
