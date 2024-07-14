@@ -1,108 +1,147 @@
 import React, { useState, useEffect } from 'react';
+import { FaTimes } from 'react-icons/fa';
 
-const EditBookModal = ({ isOpen, onClose, book, onSave, authors, genres }) => {
-  const [title, setTitle] = useState('');
-  const [authorId, setAuthorId] = useState('');
-  const [genreId, setGenreId] = useState('');
-  const [price, setPrice] = useState('');
-  const [publicationDate, setPublicationDate] = useState('');
+const EditBookModal = ({ isOpen, onClose, onSave, book }) => {
+  const [editedBook, setEditedBook] = useState({
+    title: book?.title || '',
+    author: book?.author?.name || '',
+    genre: book?.genre?.genre_name || '',
+    price: book?.price || '',
+    publication_date: book?.publication_date || '',
+  });
+
+  const [authors, setAuthors] = useState([]);
+  const [genres, setGenres] = useState([]);
 
   useEffect(() => {
-    if (book) {
-      setTitle(book.title);
-      setAuthorId(book.author.id);
-      setGenreId(book.genre.id);
-      setPrice(book.price);
-      setPublicationDate(book.publication_date);
-    }
+    const fetchAuthorsAndGenres = async () => {
+      try {
+        const [authorsResponse, genresResponse] = await Promise.all([
+          fetch('http://localhost:5000/get/authors'),
+          fetch('http://localhost:5000/get/genres')
+        ]);
+
+        if (!authorsResponse.ok || !genresResponse.ok) {
+          throw new Error('Failed to fetch authors or genres');
+        }
+
+        const authorsData = await authorsResponse.json();
+        const genresData = await genresResponse.json();
+
+        setAuthors(authorsData);
+        setGenres(genresData);
+      } catch (error) {
+        console.error('Error fetching authors or genres:', error);
+      }
+    };
+
+    fetchAuthorsAndGenres();
+  }, []);
+
+  useEffect(() => {
+    setEditedBook({
+      title: book?.title || '',
+      author: book?.author?.name || '',
+      genre: book?.genre?.genre_name || '',
+      price: book?.price || '',
+      publication_date: book?.publication_date || '',
+    });
   }, [book]);
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setEditedBook(prevState => ({
+      ...prevState,
+      [name]: value
+    }));
+  };
+
   const handleSave = () => {
-    const editedBook = {
-      id: book.id,
-      title,
-      authorId,
-      genreId,
-      price,
-      publication_date: publicationDate,
-    };
     onSave(editedBook);
     onClose();
   };
 
+  if (!isOpen) return null;
+
   return (
-    <div className={`fixed top-0 left-0 w-full h-full flex justify-center items-center bg-black bg-opacity-50 ${isOpen ? '' : 'hidden'}`}>
-      <div className="bg-white rounded-lg p-8 max-w-md w-full">
-        <h2 className="text-lg font-bold mb-4">Edit Book</h2>
-        <form>
-          <div className="mb-4">
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700">Title:</label>
-            <input
-              type="text"
-              id="title"
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-          </div>
-          <div className="mb-4">
-            <label htmlFor="author" className="block text-sm font-medium text-gray-700">Author:</label>
-            <select
-              id="author"
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              value={authorId}
-              onChange={(e) => setAuthorId(e.target.value)}
-            >
-              <option value="">Select Author</option>
-              {authors.map(author => (
-                <option key={author.id} value={author.id}>{author.name}</option>
-              ))}
-            </select>
-          </div>
-          <div className="mb-4">
-            <label htmlFor="genre" className="block text-sm font-medium text-gray-700">Genre:</label>
-            <select
-              id="genre"
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              value={genreId}
-              onChange={(e) => setGenreId(e.target.value)}
-            >
-              <option value="">Select Genre</option>
-              {genres.map(genre => (
-                <option key={genre.id} value={genre.id}>{genre.genre_name}</option>
-              ))}
-            </select>
-          </div>
-          <div className="mb-4">
-            <label htmlFor="price" className="block text-sm font-medium text-gray-700">Price:</label>
-            <input
-              type="text"
-              id="price"
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-            />
-          </div>
-          <div className="mb-4">
-            <label htmlFor="publicationDate" className="block text-sm font-medium text-gray-700">Publication Date:</label>
-            <input
-              type="text"
-              id="publicationDate"
-              className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              value={publicationDate}
-              onChange={(e) => setPublicationDate(e.target.value)}
-            />
-          </div>
-          <div className="flex justify-end">
-            <button
-              type="button"
-              className="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-blue-500 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500"
-              onClick={handleSave}
-            >
-              Save
-            </button>
-          </div>
-        </form>
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="fixed inset-0 bg-black opacity-50" onClick={onClose}></div>
+      <div className="bg-white rounded-lg shadow-lg overflow-hidden w-full max-w-md mx-auto z-10">
+        <div className="flex justify-between items-center p-4 border-b">
+          <h2 className="text-xl font-semibold">Edit Book</h2>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+            <FaTimes />
+          </button>
+        </div>
+        <div className="p-4">
+          <form>
+            <div className="mb-4">
+              <label className="block text-gray-700 text-sm font-bold mb-2">Title</label>
+              <input
+                type="text"
+                name="title"
+                value={editedBook.title}
+                onChange={handleChange}
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-gray-700 text-sm font-bold mb-2">Author</label>
+              <select
+                name="author"
+                value={editedBook.author}
+                onChange={handleChange}
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              >
+                {authors.map((author, index) => (
+                  <option key={index} value={author.name}>{author.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="mb-4">
+              <label className="block text-gray-700 text-sm font-bold mb-2">Genre</label>
+              <select
+                name="genre"
+                value={editedBook.genre}
+                onChange={handleChange}
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              >
+                {genres.map((genre, index) => (
+                  <option key={index} value={genre.genre_name}>{genre.genre_name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="mb-4">
+              <label className="block text-gray-700 text-sm font-bold mb-2">Price</label>
+              <input
+                type="text"
+                name="price"
+                value={editedBook.price}
+                onChange={handleChange}
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-gray-700 text-sm font-bold mb-2">Publication Date</label>
+              <input
+                type="date"
+                name="publication_date"
+                value={editedBook.publication_date}
+                onChange={handleChange}
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              />
+            </div>
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={handleSave}
+                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+              >
+                Save
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );

@@ -7,11 +7,9 @@ const BooksPage = () => {
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [booksPerPage] = useState(8); // Number of books to display per page
-  const [sortBy, setSortBy] = useState('title'); // Default sort by title
+  const [booksPerPage] = useState(8);
+  const [sortBy, setSortBy] = useState('title');
   const [searchTerm, setSearchTerm] = useState('');
-  const [authors, setAuthors] = useState([]);
-  const [genres, setGenres] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedBook, setSelectedBook] = useState(null);
 
@@ -34,38 +32,24 @@ const BooksPage = () => {
     fetchBooks();
   }, []);
 
-  useEffect(() => {
-    const fetchAuthors = async () => {
-      try {
-        const response = await fetch('http://localhost:5000/get/authors');
-        if (!response.ok) {
-          throw new Error('Failed to fetch authors');
-        }
-        const data = await response.json();
-        setAuthors(data);
-      } catch (error) {
-        console.error('Error fetching authors:', error);
-      }
-    };
+  const openEditModal = (book) => {
+    setSelectedBook(book);
+    setIsModalOpen(true);
+  };
 
-    const fetchGenres = async () => {
-      try {
-        const response = await fetch('http://localhost:5000/get/genres');
-        if (!response.ok) {
-          throw new Error('Failed to fetch genres');
-        }
-        const data = await response.json();
-        setGenres(data);
-      } catch (error) {
-        console.error('Error fetching genres:', error);
-      }
-    };
+  const closeEditModal = () => {
+    setIsModalOpen(false);
+    setSelectedBook(null);
+  };
 
-    fetchAuthors();
-    fetchGenres();
-  }, []);
+  const handleSave = (editedBook) => {
+    // Update the books state with the edited book
+    const updatedBooks = books.map((book) =>
+      book.title === editedBook.title ? editedBook : book
+    );
+    setBooks(updatedBooks);
+  };
 
-  // Sorting books based on sortBy criteria
   const sortedBooks = [...books].sort((a, b) => {
     if (sortBy === 'title') {
       return a.title.localeCompare(b.title);
@@ -81,20 +65,16 @@ const BooksPage = () => {
     return 0;
   });
 
-  // Filter books based on search term
   const filteredBooks = sortedBooks.filter(book =>
     book.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Calculate number of pages
   const totalPages = Math.ceil(filteredBooks.length / booksPerPage);
 
-  // Get current books
   const indexOfLastBook = currentPage * booksPerPage;
   const indexOfFirstBook = indexOfLastBook - booksPerPage;
   const currentBooks = filteredBooks.slice(indexOfFirstBook, indexOfLastBook);
 
-  // Change page
   const paginate = (pageNumber) => {
     if (pageNumber < 1) {
       pageNumber = 1;
@@ -104,27 +84,9 @@ const BooksPage = () => {
     setCurrentPage(pageNumber);
   };
 
-  // Handle sorting change
   const handleSortChange = (e) => {
     setSortBy(e.target.value);
-    setCurrentPage(1); // Reset to first page when sorting changes
-  };
-
-  // Handle edit book
-  const handleEditBook = (book) => {
-    setSelectedBook(book);
-    setIsModalOpen(true);
-  };
-
-  // Handle save edited book
-  const handleSaveBook = (editedBook) => {
-    // Update book in books array
-    const updatedBooks = books.map(b =>
-      b.id === editedBook.id ? editedBook : b
-    );
-    setBooks(updatedBooks);
-    setIsModalOpen(false);
-    setSelectedBook(null);
+    setCurrentPage(1);
   };
 
   if (loading) {
@@ -180,14 +142,13 @@ const BooksPage = () => {
             genre={book.genre.genre_name}
             price={book.price}
             publicationDate={book.publication_date}
-            imageUrl={book.imageUrl}
-            onEdit={() => handleEditBook(book)}
+            imageUrl="https://via.placeholder.com/100"
             className="w-1/2 md:w-1/3 lg:w-1/4 xl:w-1/4 p-4"
+            onEdit={() => openEditModal(book)}
           />
         ))}
       </div>
 
-      {/* Pagination */}
       <div className="flex justify-center mt-4">
         <nav className="block">
           <ul className="flex pl-0 rounded list-none flex-wrap border border-gray-300">
@@ -223,17 +184,12 @@ const BooksPage = () => {
         </nav>
       </div>
 
-      {/* Edit Book Modal */}
-      {isModalOpen && (
-        <EditBookModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          onSave={handleSaveBook}
-          book={selectedBook}
-          authors={authors}
-          genres={genres}
-        />
-      )}
+      <EditBookModal
+        isOpen={isModalOpen}
+        onClose={closeEditModal}
+        onSave={handleSave}
+        book={selectedBook}
+      />
     </Layout>
   );
 };
