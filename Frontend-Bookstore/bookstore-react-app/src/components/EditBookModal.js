@@ -8,8 +8,10 @@ const EditBookModal = ({ isOpen, onClose, onSave, book }) => {
     genre: book?.genre?.genre_name || '',
     price: book?.price || '',
     publication_date: book?.publication_date || '',
+    image: book?.image || ''
   });
 
+  const [imagePreview, setImagePreview] = useState(book?.image || '');
   const [authors, setAuthors] = useState([]);
   const [genres, setGenres] = useState([]);
 
@@ -45,7 +47,9 @@ const EditBookModal = ({ isOpen, onClose, onSave, book }) => {
       genre: book?.genre?.genre_name || '',
       price: book?.price || '',
       publication_date: book?.publication_date || '',
+      image: book?.image || ''
     });
+    setImagePreview(book?.image || '');
   }, [book]);
 
   const handleChange = (e) => {
@@ -54,6 +58,22 @@ const EditBookModal = ({ isOpen, onClose, onSave, book }) => {
       ...prevState,
       [name]: value
     }));
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    setEditedBook(prevState => ({
+      ...prevState,
+      image: file
+    }));
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result);
+    };
+    if (file) {
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSave = () => {
@@ -130,6 +150,23 @@ const EditBookModal = ({ isOpen, onClose, onSave, book }) => {
                 onChange={handleChange}
                 className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
               />
+            </div>
+            <div className="mb-4">
+              <label className="block text-gray-700 text-sm font-bold mb-2">Image</label>
+              <input
+                type="file"
+                name="image"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              />
+              {imagePreview && (
+                <img
+                  src={imagePreview}
+                  alt="Book Cover Preview"
+                  className="mt-2 w-32 h-40 object-cover"
+                />
+              )}
             </div>
             <div className="flex justify-end">
               <button

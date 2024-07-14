@@ -12,7 +12,7 @@ const HomePage = () => {
           </p>
         </div>
         <div className="w-full md:w-1/2 p-4 flex justify-center">
-          <img src="/Book-Images/bookscreen1.jpg" alt="Placeholder" className="w-full md:w-4/5" />
+          <img src="bookscreen1.jpg" alt="Placeholder" className="w-full md:w-4/5" />
         </div>
       </div>
     </Layout>

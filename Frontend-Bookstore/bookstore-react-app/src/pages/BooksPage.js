@@ -12,7 +12,9 @@ const BooksPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedBook, setSelectedBook] = useState(null);
+  const prefix = "../../../Backend-Bookstore/";
 
+  console.log("prefix is" + prefix | "concat is " + prefix.concat("abc"));
   useEffect(() => {
     const fetchBooks = async () => {
       try {
@@ -74,6 +76,7 @@ const BooksPage = () => {
   const indexOfLastBook = currentPage * booksPerPage;
   const indexOfFirstBook = indexOfLastBook - booksPerPage;
   const currentBooks = filteredBooks.slice(indexOfFirstBook, indexOfLastBook);
+  
 
   const paginate = (pageNumber) => {
     if (pageNumber < 1) {
@@ -142,11 +145,13 @@ const BooksPage = () => {
             genre={book.genre.genre_name}
             price={book.price}
             publicationDate={book.publication_date}
-            imageUrl="https://via.placeholder.com/100"
+            imageUrl=  {prefix.concat(book.imageUrl)}
             className="w-1/2 md:w-1/3 lg:w-1/4 xl:w-1/4 p-4"
             onEdit={() => openEditModal(book)}
           />
-        ))}
+        
+        ))
+        }
       </div>
 
       <div className="flex justify-center mt-4">
