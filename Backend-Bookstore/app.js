@@ -5,10 +5,15 @@ const fs = require('fs');
 const multer = require('multer');
 const upload = multer({dest: 'Book-Images/'});
 const upload_author = multer({dest: 'Author-Images/'});
+const cors = require('cors'); // Add this line
 
 const app = express();
 
-//books.belongsTo(authors);
+books.belongsTo(authors, {foreignKey : 'author_id'});
+books.belongsTo(genres, {foreignKey: 'genre_id'});
+
+// Enable CORS for all origins during development
+app.use(cors());
 
 app.use(express.json());
 app.use('/Book-Images', express.static(path.join(__dirname, 'Book-Images')));
@@ -16,7 +21,8 @@ app.use('/Book-Images', express.static(path.join(__dirname, 'Book-Images')));
 //book POST
 
 app.post('/book', upload.single('image'), async(req, res) => {
-    const {title, price, publication_date} = req.body;
+   // const {title, price, publication_date} = req.body;
+   const {title, price, publication_date, author_id, genre_id} = req.body;
     const imageFile = req.file;
     let imageUrl = "";
 
@@ -45,10 +51,14 @@ app.post('/book', upload.single('image'), async(req, res) => {
         // Respond with success message 
         //res.json({ message: 'Image uploaded successfully', imageUrl });
        });
+    //    include: [{
+    //     model: authors,
+    //     attributes: ['name']
+    // }]
 
 
-
-        const book = await books.create({title, price, publication_date, imageUrl});
+        //const book = await books.create({title, price, publication_date, imageUrl});
+        const book = await books.create({title, price, publication_date, imageUrl, author_id, genre_id});
         return res.json(book);
     } catch(err){
         console.log(err);
@@ -61,7 +71,17 @@ app.post('/book', upload.single('image'), async(req, res) => {
 
 app.get('/books', async(req, res) => {
     try {
-        const books_list = await books.findAll();
+        const books_list = await books.findAll({
+            attributes: ['title', 'price', 'publication_date','imageUrl'],
+        include: [{
+            model: authors,
+            attributes: ['name']
+        },{
+            model:genres,
+            attributes: ['genre_name']
+        }
+    ]});
+        
         res.json(books_list);
 
     }
@@ -78,6 +98,19 @@ app.get('/book/:id', async(req, res) => {
     try {
         const book = await books.findOne({
             where: { book_id },
+            //attributes: ['title', 'price', 'publication_date','imageUrl'],
+            include: [{
+                model: authors,
+                attributes: ['author_id','name']
+            },{
+                model:genres,
+                attributes: ['genre_id','genre_name']
+            }
+        ]
+          /* include: [{
+            model:authors,
+
+           }]*/
         });
         res.json(book);
 
@@ -117,7 +150,17 @@ app.put('/book/:id',upload_author.single('image'), async(req,res)=>{
     }
     try{
         const book = await books.findOne({
-            where: { book_id }});
+            where: { book_id },
+            attributes: ['title', 'price', 'publication_date','imageUrl'],
+            include: [{
+                model: authors,
+                attributes: ['name']
+            },{
+                model:genres,
+                attributes: ['genre_name']
+            }
+            ]
+        });
             if(title){
             book.title=title;}
             if(price){
@@ -298,8 +341,67 @@ app.put('/author/:id',upload_author.single('image'), async(req,res)=>{
 
 /*---------GENRES-------------*/
 //genres GET
-
-app.get('/genres', async(req, res) => {
+app.get("/genres", async (req, res) => {
+    try {
+      const genres_list = await genres.findAll();
+      res.json(genres_list);
+    } catch (err) {
+      console.log(err);
+      return res.status(400).json(err);
+    }
+  });
+  //genres GET one
+  app.get("/genre/:id", async (req, res) => {
+    const genre_id = req.params.id;
+    try {
+      const genre = await genres.findOne({
+        where: { genre_id },
+      });
+      res.json(genre);
+    } catch (err) {
+      console.log(err);
+      return res.status(400).json(err);
+    }
+  });
+  //genres POST
+  app.post("/genre", async (req, res) => {
+    const { genre_name } = req.body;
+    const genre = await genres.create({ genre_name });
+    return res.json(genre);
+  });
+  //genres delete
+  app.delete("/genre/:id", async (req, res) => {
+    const genre_id = req.params.id;
+    try {
+      const genre = await genres.findOne({
+        where: { genre_id },
+      });
+      await genre.destroy();
+      return res.json({ message: "genre Deleted!" });
+    } catch (err) {
+      console.log(err);
+      return res.status(400).json(err);
+    }
+  });
+  //genres PUT
+  app.put("/genre/:id", async (req, res) => {
+    const genre_id = req.params.id;
+    const { genre_name } = req.body;
+    try {
+      const genre = await genres.findOne({
+        where: { genre_id },
+      });
+      if (genre_name) {
+        genre.genre_name = genre_name;
+      }
+      await genre.save();
+      return res.json(genre);
+    } catch (err) {
+      console.log(err);
+      return res.status(500).json(err);
+    }
+  });
+/* app.get('/genres', async(req, res) => {
     try {
         const genres_list = await genres.findAll();
         res.json(genres_list);
@@ -378,10 +480,10 @@ app.put('/genre/:id', async(req,res)=>{
         console.log(err);
         return res.status(500).json(err);
     }
-});
+});*/
 
 app.listen({ port: 5000}, async () => {
     console.log('Server up on http://localhost:5000');
-    await sequelize.sync({force:true});
+    await sequelize.sync();
     console.log('Database synced!');
 });

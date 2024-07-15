@@ -19,8 +19,8 @@ const EditBookModal = ({ isOpen, onClose, onSave, book }) => {
     const fetchAuthorsAndGenres = async () => {
       try {
         const [authorsResponse, genresResponse] = await Promise.all([
-          fetch('http://localhost:5000/get/authors'),
-          fetch('http://localhost:5000/get/genres')
+          fetch('http://localhost:5000/authors'),
+          fetch('http://localhost:5000/genres')
         ]);
 
         if (!authorsResponse.ok || !genresResponse.ok) {

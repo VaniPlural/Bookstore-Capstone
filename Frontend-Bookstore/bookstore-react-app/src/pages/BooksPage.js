@@ -12,9 +12,10 @@ const BooksPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedBook, setSelectedBook] = useState(null);
-  const prefix = "../../../Backend-Bookstore/";
+  //const prefix = "../../../../Backend-Bookstore";
+  const prefix="http://localhost:5000";
 
-  console.log("prefix is" + prefix | "concat is " + prefix.concat("abc"));
+  //console.log("prefix is" + prefix | "concat is " + prefix.concat("abc");
   useEffect(() => {
     const fetchBooks = async () => {
       try {
@@ -76,7 +77,7 @@ const BooksPage = () => {
   const indexOfLastBook = currentPage * booksPerPage;
   const indexOfFirstBook = indexOfLastBook - booksPerPage;
   const currentBooks = filteredBooks.slice(indexOfFirstBook, indexOfLastBook);
-  
+  console.log(currentBooks);
 
   const paginate = (pageNumber) => {
     if (pageNumber < 1) {
@@ -112,7 +113,7 @@ const BooksPage = () => {
           <input
             type="text"
             placeholder="Search by title"
-            className="border border-gray-300 rounded py-2 px-4"
+            className="border border-indigo-300 rounded py-2 px-4"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -123,7 +124,7 @@ const BooksPage = () => {
         <div className="md:ml-auto">
           <label className="mr-2">Sort by:</label>
           <select
-            className="border border-gray-300 rounded py-2 px-4"
+            className="border border-indigo-300 rounded py-2 px-4"
             value={sortBy}
             onChange={handleSortChange}
           >
@@ -146,11 +147,12 @@ const BooksPage = () => {
             price={book.price}
             publicationDate={book.publication_date}
             imageUrl=  {prefix.concat(book.imageUrl)}
+           
             className="w-1/2 md:w-1/3 lg:w-1/4 xl:w-1/4 p-4"
             onEdit={() => openEditModal(book)}
           />
-        
         ))
+        
         }
       </div>
 
