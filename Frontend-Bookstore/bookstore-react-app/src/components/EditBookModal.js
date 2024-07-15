@@ -8,10 +8,10 @@ const EditBookModal = ({ isOpen, onClose, onSave, book }) => {
     genre: book?.genre?.genre_name || '',
     price: book?.price || '',
     publication_date: book?.publication_date || '',
-    image: book?.image || ''
+    imageUrl: book?.imageUrl || '',
   });
 
-  const [imagePreview, setImagePreview] = useState(book?.image || '');
+  const [imagePreview, setImagePreview] = useState(book?.imageUrl || '');
   const [authors, setAuthors] = useState([]);
   const [genres, setGenres] = useState([]);
 
@@ -20,7 +20,7 @@ const EditBookModal = ({ isOpen, onClose, onSave, book }) => {
       try {
         const [authorsResponse, genresResponse] = await Promise.all([
           fetch('http://localhost:5000/authors'),
-          fetch('http://localhost:5000/genres')
+          fetch('http://localhost:5000/genres'),
         ]);
 
         if (!authorsResponse.ok || !genresResponse.ok) {
@@ -47,24 +47,24 @@ const EditBookModal = ({ isOpen, onClose, onSave, book }) => {
       genre: book?.genre?.genre_name || '',
       price: book?.price || '',
       publication_date: book?.publication_date || '',
-      image: book?.image || ''
+      imageUrl: book?.imageUrl || '',
     });
-    setImagePreview(book?.image || '');
+    setImagePreview(book?.imageUrl || '');
   }, [book]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setEditedBook(prevState => ({
+    setEditedBook((prevState) => ({
       ...prevState,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
-    setEditedBook(prevState => ({
+    setEditedBook((prevState) => ({
       ...prevState,
-      image: file
+      imageUrl: file,
     }));
 
     const reader = new FileReader();
@@ -78,7 +78,6 @@ const EditBookModal = ({ isOpen, onClose, onSave, book }) => {
 
   const handleSave = () => {
     onSave(editedBook);
-    onClose();
   };
 
   if (!isOpen) return null;
@@ -86,7 +85,7 @@ const EditBookModal = ({ isOpen, onClose, onSave, book }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="fixed inset-0 bg-black opacity-50" onClick={onClose}></div>
-      <div className="bg-white rounded-lg shadow-lg overflow-hidden w-full max-w-md mx-auto z-10">
+      <div className="bg-white rounded-lg shadow-lg overflow-y-auto w-full max-w-md mx-auto z-10">
         <div className="flex justify-between items-center p-4 border-b">
           <h2 className="text-xl font-semibold">Edit Book</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
@@ -113,8 +112,8 @@ const EditBookModal = ({ isOpen, onClose, onSave, book }) => {
                 onChange={handleChange}
                 className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
               >
-                {authors.map((author, index) => (
-                  <option key={index} value={author.name}>{author.name}</option>
+                {authors.map((author) => (
+                  <option key={author.author_id} value={author.name}>{author.name}</option>
                 ))}
               </select>
             </div>
@@ -126,8 +125,8 @@ const EditBookModal = ({ isOpen, onClose, onSave, book }) => {
                 onChange={handleChange}
                 className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
               >
-                {genres.map((genre, index) => (
-                  <option key={index} value={genre.genre_name}>{genre.genre_name}</option>
+                {genres.map((genre) => (
+                  <option key={genre.genre_id} value={genre.genre_name}>{genre.genre_name}</option>
                 ))}
               </select>
             </div>
@@ -155,7 +154,7 @@ const EditBookModal = ({ isOpen, onClose, onSave, book }) => {
               <label className="block text-gray-700 text-sm font-bold mb-2">Image</label>
               <input
                 type="file"
-                name="image"
+                name="imageUrl"
                 accept="image/*"
                 onChange={handleImageChange}
                 className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"

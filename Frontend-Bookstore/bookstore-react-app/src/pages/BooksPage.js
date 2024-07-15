@@ -1,202 +1,392 @@
-import React, { useEffect, useState } from 'react';
-import Layout from '../components/Layout';
-import BookCard from '../components/BookCard';
-import EditBookModal from '../components/EditBookModal';
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { FaEdit, FaTrash } from "react-icons/fa";
+import Layout from "../components/Layout";
+
+// Modal Component
+const Modal = ({ isOpen, onClose, onConfirm, bookId }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 flex items-center justify-center z-50">
+      <div
+        className="fixed inset-0 bg-black opacity-50"
+        onClick={onClose}
+      ></div>
+      <div className="bg-white p-6 rounded-lg shadow-lg z-10">
+        <h2 className="text-xl mb-4">Confirm Deletion</h2>
+        <p>Are you sure you want to delete this book?</p>
+        <div className="mt-4 flex justify-end">
+          <button
+            onClick={onClose}
+            className="bg-gray-500 text-white py-2 px-4 rounded-md hover:bg-gray-600 mr-2"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => onConfirm(bookId)}
+            className="bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600"
+          >
+            Confirm
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const BooksPage = () => {
   const [books, setBooks] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [selectedBooks, setSelectedBooks] = useState(new Set());
   const [currentPage, setCurrentPage] = useState(1);
-  const [booksPerPage] = useState(8);
-  const [sortBy, setSortBy] = useState('title');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedBook, setSelectedBook] = useState(null);
-  //const prefix = "../../../../Backend-Bookstore";
-  const prefix="http://localhost:5000";
+  const [sortKey, setSortKey] = useState("book_id"); // Default sort by book_id
+  const [sortDirection, setSortDirection] = useState("asc"); // Default ascending
+  const [searchTerm, setSearchTerm] = useState(""); // For search functionality
+  const [successMessage, setSuccessMessage] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false); // Modal state
+  const [bookToDelete, setBookToDelete] = useState(null); // Book ID for deletion confirmation
+  const itemsPerPage = 5; // Number of items per page
+  const navigate = useNavigate();
 
-  //console.log("prefix is" + prefix | "concat is " + prefix.concat("abc");
+  // Fetch the list of books from the API when the component mounts
   useEffect(() => {
     const fetchBooks = async () => {
       try {
-        const response = await fetch('http://localhost:5000/books/');
-        if (!response.ok) {
-          throw new Error('Failed to fetch books');
-        }
+        const response = await fetch("http://localhost:5000/books");
         const data = await response.json();
         setBooks(data);
-        setLoading(false);
       } catch (error) {
-        console.error('Error fetching books:', error);
-        setLoading(false);
+        console.error("Error fetching books:", error);
       }
     };
 
     fetchBooks();
   }, []);
 
-  const openEditModal = (book) => {
-    setSelectedBook(book);
+  // Toggle selection of a single book
+  const handleCheckboxChange = (id) => {
+    setSelectedBooks((prevSelected) => {
+      const newSelected = new Set(prevSelected);
+      if (newSelected.has(id)) {
+        newSelected.delete(id);
+      } else {
+        newSelected.add(id);
+      }
+      return newSelected;
+    });
+  };
+
+  // Handle delete of a single book
+  const handleDeleteBook = (id) => {
+    setBookToDelete(id);
     setIsModalOpen(true);
   };
 
-  const closeEditModal = () => {
-    setIsModalOpen(false);
-    setSelectedBook(null);
-  };
+  // Handle delete of selected books
+  const handleDeleteSelected = async () => {
+    if (window.confirm("Are you sure you want to delete the selected books?")) {
+      try {
+        await Promise.all(
+          Array.from(selectedBooks).map((id) =>
+            fetch(`http://localhost:5000/book/${id}`, {
+              method: "DELETE",
+            })
+          )
+        );
 
-  const handleSave = (editedBook) => {
-    // Update the books state with the edited book
-    const updatedBooks = books.map((book) =>
-      book.title === editedBook.title ? editedBook : book
-    );
-    setBooks(updatedBooks);
-  };
-
-  const sortedBooks = [...books].sort((a, b) => {
-    if (sortBy === 'title') {
-      return a.title.localeCompare(b.title);
-    } else if (sortBy === 'author') {
-      return a.author.name.localeCompare(b.author.name);
-    } else if (sortBy === 'price') {
-      return parseFloat(a.price) - parseFloat(b.price);
-    } else if (sortBy === 'publication_date') {
-      return new Date(a.publication_date) - new Date(b.publication_date);
-    } else if (sortBy === 'genre') {
-      return a.genre.genre_name.localeCompare(b.genre.genre_name);
+        // Remove deleted books from the list
+        const updatedBooks = books.filter(
+          (book) => !selectedBooks.has(book.book_id)
+        );
+        setBooks(updatedBooks);
+        setSelectedBooks(new Set());
+        setSuccessMessage("Selected books deleted successfully");
+        setTimeout(() => setSuccessMessage(""), 3000); // Clear message after 3 seconds
+      } catch (error) {
+        console.error("Error deleting selected books:", error);
+      }
     }
-    return 0;
-  });
+  };
 
-  const filteredBooks = sortedBooks.filter(book =>
+  // Confirm delete of a book
+  const handleConfirmDelete = async (id) => {
+    try {
+      const response = await fetch(`http://localhost:5000/book/${id}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        // Remove the deleted book from the list
+        setBooks((prevBooks) =>
+          prevBooks.filter((book) => book.book_id !== id)
+        );
+        setSuccessMessage("Book deleted successfully");
+        setTimeout(() => setSuccessMessage(""), 3000); // Clear message after 3 seconds
+      } else {
+        console.error("Failed to delete the book");
+      }
+    } catch (error) {
+      console.error("Error deleting book:", error);
+    } finally {
+      setIsModalOpen(false);
+      setBookToDelete(null);
+    }
+  };
+
+  // Handle edit of a book
+  const handleEditBook = (id) => {
+    navigate(`/edit-book/${id}`);
+  };
+
+  // Filtered and sorted data
+  const filteredBooks = books.filter((book) =>
     book.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const totalPages = Math.ceil(filteredBooks.length / booksPerPage);
+  // Sort data
+  const sortData = (data) => {
+    return data.sort((a, b) => {
+      if (a[sortKey] < b[sortKey]) return sortDirection === "asc" ? -1 : 1;
+      //return sortDirection === 'asc' ? 1 : -1;
+      if (a[sortKey] > b[sortKey]) return sortDirection === "asc" ? 1 : -1;
+      return 0;
+    });
+  };
 
-  const indexOfLastBook = currentPage * booksPerPage;
-  const indexOfFirstBook = indexOfLastBook - booksPerPage;
-  const currentBooks = filteredBooks.slice(indexOfFirstBook, indexOfLastBook);
-  console.log(currentBooks);
+  // Pagination logic
+  const totalItems = filteredBooks.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
 
-  const paginate = (pageNumber) => {
-    if (pageNumber < 1) {
-      pageNumber = 1;
-    } else if (pageNumber > totalPages) {
-      pageNumber = totalPages;
+  // Get current page data
+  const currentItems = sortData(filteredBooks).slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  // Change page handler
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
     }
-    setCurrentPage(pageNumber);
   };
 
-  const handleSortChange = (e) => {
-    setSortBy(e.target.value);
-    setCurrentPage(1);
+  // Handle column sort
+  const handleSort = (key) => {
+    if (sortKey === key) {
+      setSortDirection((prevDirection) =>
+        prevDirection === "asc" ? "desc" : "asc"
+      );
+    } else {
+      setSortKey(key);
+      setSortDirection("asc");
+    }
   };
-
-  if (loading) {
-    return (
-      <Layout>
-        <div className="flex justify-center items-center min-h-screen">
-          <p>Loading...</p>
-        </div>
-      </Layout>
-    );
-  }
 
   return (
     <Layout>
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4">
-        <div className="mb-2 md:mb-0 md:flex md:space-x-2">
-          <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-            Add Book
-          </button>
-          <input
-            type="text"
-            placeholder="Search by title"
-            className="border border-indigo-300 rounded py-2 px-4"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <button className="bg-blue-500 hover:bg-blue-700 text-white rounded py-2 px-4">
-            Search
-          </button>
+      <div className="flex">
+        {/* Right Section with Book Table */}
+        <div className="flex-1 p-4">
+          {successMessage && (
+            <div className="bg-green-500 text-white p-4 rounded-md mb-4 shadow-md">
+              {successMessage}
+            </div>
+          )}
+
+          <div className="mb-4 flex flex-col md:flex-row md:items-center md:justify-between">
+            <Link
+              to="/add-book" // Route to AddBookPage
+              className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600"
+            >
+              Add New Book
+            </Link>
+            <input
+              type="text"
+              placeholder="Search by title..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="mt-2 md:mt-0 md:ml-4 p-2 border rounded"
+            />
+          </div>
+          <div className="mb-4">
+            <button
+              onClick={handleDeleteSelected}
+              disabled={selectedBooks.size === 0}
+              className="bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600"
+            >
+              Delete Selected
+            </button>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-white border border-gray-200 rounded-lg shadow-md">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="border border-gray-300 p-2">
+                    <input
+                      type="checkbox"
+                      onChange={() => {
+                        if (selectedBooks.size === totalItems) {
+                          setSelectedBooks(new Set());
+                        } else {
+                          setSelectedBooks(
+                            new Set(filteredBooks.map((book) => book.book_id))
+                          );
+                        }
+                      }}
+                      checked={selectedBooks.size === totalItems}
+                    />
+                  </th>
+                  <th
+                    className="border border-gray-300 p-2 cursor-pointer"
+                    onClick={() => handleSort("book_id")}
+                  >
+                    Book ID
+                    {sortKey === "book_id" && (
+                      <span>{sortDirection === "asc" ? " ▲" : " ▼"}</span>
+                    )}
+                  </th>
+                  <th className="border border-gray-300 p-2">Image</th>
+                  <th
+                    className="border border-gray-300 p-2 cursor-pointer"
+                    onClick={() => handleSort("title")}
+                  >
+                    Title
+                    {sortKey === "title" && (
+                      <span>{sortDirection === "asc" ? " ▲" : " ▼"}</span>
+                    )}
+                  </th>
+                  <th
+                    className="border border-gray-300 p-2 cursor-pointer"
+                    onClick={() => handleSort("author")}
+                  >
+                    Author
+                    {sortKey === "author" && (
+                      <span>{sortDirection === "asc" ? " ▲" : " ▼"}</span>
+                    )}
+                  </th>
+                  <th
+                    className="border border-gray-300 p-2 cursor-pointer"
+                    onClick={() => handleSort("genre")}
+                  >
+                    Genre
+                    {sortKey === "genre" && (
+                      <span>{sortDirection === "asc" ? " ▲" : " ▼"}</span>
+                    )}
+                  </th>
+                  <th
+                    className="border border-gray-300 p-2 cursor-pointer"
+                    onClick={() => handleSort("publication_date")}
+                  >
+                    Publication Date
+                    {sortKey === "publication_date" && (
+                      <span>{sortDirection === "asc" ? " ▲" : " ▼"}</span>
+                    )}
+                  </th>
+                  <th
+                    className="border border-gray-300 p-2 cursor-pointer"
+                    onClick={() => handleSort("price")}
+                  >
+                    Price (₹)
+                    {sortKey === "price" && (
+                      <span>{sortDirection === "asc" ? " ▲" : " ▼"}</span>
+                    )}
+                  </th>
+                  <th className="border border-gray-300 p-2">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {currentItems.map((book) => (
+                  <tr key={book.book_id}>
+                    <td className="border border-gray-300 p-2">
+                      <input
+                        type="checkbox"
+                        checked={selectedBooks.has(book.book_id)}
+                        onChange={() => handleCheckboxChange(book.book_id)}
+                      />
+                    </td>
+                    <td className="border border-gray-300 p-2">
+                      {book.book_id}
+                    </td>
+                    <td className="border border-gray-300 p-2">
+                      <img
+                        src={book.image || "https://via.placeholder.com/50"} // Use actual book image if available
+                        alt={book.title}
+                        className="w-12 h-12 object-cover rounded-md"
+                      />
+                    </td>
+                    <td className="border border-gray-300 p-2">{book.title}</td>
+                    <td className="border border-gray-300 p-2">
+                      <Link
+                        to={`/author-profile/${book.author.author_id}`}
+                        className="text-blue-500 hover:underline"
+                      >
+                        {book.author.name}
+                      </Link>
+                    </td>
+                    <td className="border border-gray-300 p-2">
+                      {book.genre.genre_name}
+                    </td>
+                    <td className="border border-gray-300 p-2">
+                      {new Date(book.publication_date).toLocaleDateString()}
+                    </td>
+                    <td className="border border-gray-300 p-2">{book.price}</td>
+                    <td className="border border-gray-300 p-2">
+                      <button
+                        onClick={() => handleEditBook(book.book_id)}
+                        className="text-blue-500 hover:text-blue-700 mr-2"
+                      >
+                        <FaEdit size={20} />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteBook(book.book_id)}
+                        className="text-red-500 hover:text-red-700 mr-2"
+                      >
+                        <FaTrash size={20} />
+                      </button>
+                      <br />
+                      <Link
+                        to={`/book-details/${book.book_id}`}
+                        className="text-blue-500 hover:underline"
+                      >
+                        Show Details
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination Controls */}
+          <div className="mt-4 text-center">
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="bg-gray-300 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-400"
+            >
+              Previous
+            </button>
+            <span className="mx-4">
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="bg-gray-300 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-400"
+            >
+              Next
+            </button>
+          </div>
         </div>
-        <div className="md:ml-auto">
-          <label className="mr-2">Sort by:</label>
-          <select
-            className="border border-indigo-300 rounded py-2 px-4"
-            value={sortBy}
-            onChange={handleSortChange}
-          >
-            <option value="title">Title</option>
-            <option value="author">Author</option>
-            <option value="price">Price</option>
-            <option value="publication_date">Publication Date</option>
-            <option value="genre">Genre</option>
-          </select>
-        </div>
-      </div>
 
-      <div className="flex flex-wrap justify-center">
-        {currentBooks.map((book, index) => (
-          <BookCard
-            key={index}
-            title={book.title}
-            author={book.author.name}
-            genre={book.genre.genre_name}
-            price={book.price}
-            publicationDate={book.publication_date}
-            imageUrl=  {prefix.concat(book.imageUrl)}
-           
-            className="w-1/2 md:w-1/3 lg:w-1/4 xl:w-1/4 p-4"
-            onEdit={() => openEditModal(book)}
-          />
-        ))
-        
-        }
+        {/* Modal Component */}
+        <Modal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onConfirm={handleConfirmDelete}
+          bookId={bookToDelete}
+        />
       </div>
-
-      <div className="flex justify-center mt-4">
-        <nav className="block">
-          <ul className="flex pl-0 rounded list-none flex-wrap border border-gray-300">
-            <li className="relative block py-2 px-3 leading-tight bg-white border border-gray-300 text-blue-700 rounded-l">
-              <button
-                className="page-link"
-                onClick={() => paginate(currentPage - 1)}
-                disabled={currentPage === 1}
-              >
-                Previous
-              </button>
-            </li>
-            {Array.from({ length: totalPages }, (_, i) => (
-              <li key={i} className="relative block py-2 px-3 leading-tight bg-white border border-gray-300 text-blue-700">
-                <button
-                  className={`page-link ${currentPage === i + 1 ? 'bg-blue-500 text-white' : ''}`}
-                  onClick={() => paginate(i + 1)}
-                >
-                  {i + 1}
-                </button>
-              </li>
-            ))}
-            <li className="relative block py-2 px-3 leading-tight bg-white border border-gray-300 text-blue-700 rounded-r">
-              <button
-                className="page-link"
-                onClick={() => paginate(currentPage + 1)}
-                disabled={currentPage === totalPages}
-              >
-                Next
-              </button>
-            </li>
-          </ul>
-        </nav>
-      </div>
-
-      <EditBookModal
-        isOpen={isModalOpen}
-        onClose={closeEditModal}
-        onSave={handleSave}
-        book={selectedBook}
-      />
     </Layout>
   );
 };

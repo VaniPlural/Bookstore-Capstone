@@ -72,13 +72,13 @@ app.post('/book', upload.single('image'), async(req, res) => {
 app.get('/books', async(req, res) => {
     try {
         const books_list = await books.findAll({
-            attributes: ['title', 'price', 'publication_date','imageUrl'],
+            //attributes: ['title', 'price', 'publication_date','imageUrl'],
         include: [{
             model: authors,
-            attributes: ['name']
+            attributes: ['author_id','name']
         },{
             model:genres,
-            attributes: ['genre_name']
+            attributes: ['genre_id','genre_name']
         }
     ]});
         
@@ -123,9 +123,67 @@ app.get('/book/:id', async(req, res) => {
 
 //book PUT
 
-app.put('/book/:id',upload_author.single('image'), async(req,res)=>{
+app.put("/book/:id", upload.single("image"), async (req, res) => {
     const book_id = req.params.id;
-    const {title,price,publication_date}=req.body;
+    const { title, price, publication_date, author_id, genre_id } = req.body;
+    const imageFile = req.file;
+    let imageUrl;
+    try {
+      if (imageFile) {
+        // unique filename
+        const uniqueFilename = Date.now() + "-" + Math.round(Math.random() * 1e9);
+        const oldPath = path.join(__dirname, imageFile.path);
+        const newPath = path.join(
+          __dirname,
+          "Book-Images",
+          uniqueFilename + path.extname(imageFile.originalname)
+        );
+        imageUrl = "/Book-Images/" + path.basename(newPath); // Example: '/uploads/1626027617853-425340324.jpg'
+        fs.rename(oldPath, newPath, (err) => {
+          if (err) {
+            console.error(err);
+            res.status(500).json({ error: "Failed to move uploaded file" });
+            return;
+          }
+          imageUrl = "/Book-Images/" + path.basename(newPath); // Example: '/uploads/1626027617853-425340324.jpg'
+          // Respond with success message
+          //res.json({ message: 'Image uploaded successfully', imageUrl });
+        });
+      }
+    } catch (err) {}
+    try {
+      const book = await books.findOne({
+        where: { book_id },
+      });
+      if (title) {
+        book.title = title;
+      }
+      if (price) {
+        book.price = price;
+      }
+      if (publication_date) {
+        book.publication_date = publication_date;
+      }
+      if (author_id) {
+        book.author_id = author_id;
+      }
+      if (genre_id) {
+        book.genre_id = genre_id;
+      }
+      if (imageUrl) {
+        book.imageUrl = imageUrl;
+      }
+      await book.save();
+      return res.json(book);
+    } catch (err) {
+      console.log(err);
+      return res.status(500).json(err);
+    }
+  });
+
+/*app.put('/book/:id',upload_author.single('image'), async(req,res)=>{
+    const book_id = req.params.id;
+    const {title,price,publication_date, }=req.body;
     const imageFile = req.file;
     let imageUrl;
     try{
@@ -177,7 +235,7 @@ app.put('/book/:id',upload_author.single('image'), async(req,res)=>{
         return res.status(500).json(err);
     }
 });
-
+*/
 //book DELETE
 
 app.delete('/book/:id', async(req, res) => {
