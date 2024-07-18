@@ -20,13 +20,13 @@ const AuthorCard = ({ author, onEdit, onDelete }) => {
   };
 
   return (
-    <div className="border rounded shadow-lg p-4 m-4 w-80">
-      <img src={author.imageUrl} alt={author.name} className="w-24 h-32 mx-auto mb-4" />
-      <h2 className="text-xl font-bold mb-2">{author.name}</h2>
-      <p>{author.biography}</p>
-      <div className="flex justify-end mt-4 space-x-4">
-        <button onClick={handleEditClick} className="text-green-500 hover:text-green-700"><FaEdit /></button>
-        <button onClick={() => onDelete(author.author_id)} className="text-red-500 hover:text-red-700"><FaTrash /></button>
+    <div className="border rounded-lg hover:shadow-blue-400 hover:shadow-lg p-4 m-4 w-40">
+      <img src={'http://localhost:5000'+author.imageUrl} alt={author.name} className="w-26 h-24 mx-auto mb-4" />
+      <h4 className="text-sm text-slate-600 font-bold font-small mb-2">{author.name}</h4>
+      <p className="text-xs">{author.biography}</p>
+      <div className="flex justify-end hover:shadow-blue-500 mt-4 space-x-4">
+        <button onClick={handleEditClick} className="text-slate-500 rounded-full hover:shadow hover:text-slate-700 hover:text-slate-800"><FaEdit /></button>
+        <button onClick={() => onDelete(author.author_id)} className="rounded-full text-red-400 hover:text-red-700"><FaTrash /></button>
       </div>
       {isModalOpen && (
         <EditAuthorModal

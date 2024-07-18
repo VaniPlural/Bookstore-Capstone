@@ -41,7 +41,7 @@ const Layout = ({ children }) => {
         </div>
       </nav>
 
-      <main className="flex-grow p-4">
+      <main className="flex-grow p-4 bg-slate-300">
         {children}
       </main>
 

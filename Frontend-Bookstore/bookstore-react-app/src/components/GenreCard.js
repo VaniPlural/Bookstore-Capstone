@@ -9,7 +9,7 @@ const GenreCard = ({ genre_name, onEdit }) => {
         <div className="border border-gray-600 rounded-lg overflow-hidden shadow-lg p-4 m-4 max-w-sm">
          
           <div className="p-4">
-            <h2 className="text-xl font-bold mb-2">{genre_name}</h2>
+            <h2 className="text-l font-bold mb-2">{genre_name}</h2>
             
             
             <p className="text-sm text-gray-600 mb-2">

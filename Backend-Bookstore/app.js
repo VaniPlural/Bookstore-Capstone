@@ -17,6 +17,8 @@ app.use(cors());
 
 app.use(express.json());
 app.use('/Book-Images', express.static(path.join(__dirname, 'Book-Images')));
+app.use('/Author-Images', express.static(path.join(__dirname, 'Author-Images')));
+
 
 //book POST
 

@@ -180,7 +180,7 @@ const GenresPage = () => {
   return (
     <Layout>
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-2xl font-semibold mb-4">Manage Genres</h1>
+        <h1 className="text-2xl text-slate-700 font-semibold mb-4">Manage Genres</h1>
         {alertMessage && (
           <div
             className={`fixed top-4 right-4 px-4 py-2 rounded shadow-lg z-50 ${
@@ -197,12 +197,12 @@ const GenresPage = () => {
           Add Genre
         </button>
         <div className="overflow-x-auto">
-          <table className="min-w-full bg-white border border-gray-300">
+          <table className="min-w-full bg-gray-300 border border-gray-300">
             <thead>
               <tr>
-                <th className="py-2 px-4 border-b text-left">Genre ID</th>
-                <th className="py-2 px-4 border-b text-left">Genre Name</th>
-                <th className="py-2 px-4 border-b text-left">Actions</th>
+                <th className="py-2 px-4 border-b text-left text-sm">Genre ID</th>
+                <th className="py-2 px-4 border-b text-left text-sm">Genre Name</th>
+                <th className="py-2 px-4 border-b text-left text-sm">Actions</th>
               </tr>
             </thead>
             <tbody>

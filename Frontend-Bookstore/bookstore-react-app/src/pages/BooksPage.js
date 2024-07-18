@@ -47,6 +47,13 @@ const BooksPage = () => {
   const [bookToDelete, setBookToDelete] = useState(null); // Book ID for deletion confirmation
   const itemsPerPage = 5; // Number of items per page
   const navigate = useNavigate();
+  const prefix = "../../../Backend-Bookstore/";
+
+
+
+
+
+
 
   // Fetch the list of books from the API when the component mounts
   useEffect(() => {
@@ -142,7 +149,7 @@ const BooksPage = () => {
   const filteredBooks = books.filter((book) =>
     book.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
+  console.log("filteredBooks", filteredBooks);
   // Sort data
   const sortData = (data) => {
     return data.sort((a, b) => {
@@ -209,41 +216,19 @@ const BooksPage = () => {
             />
           </div>
           <div className="mb-4">
-            <button
-              onClick={handleDeleteSelected}
-              disabled={selectedBooks.size === 0}
-              className="bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600"
-            >
-              Delete Selected
-            </button>
+            
           </div>
           <div className="overflow-x-auto">
             <table className="min-w-full bg-white border border-gray-200 rounded-lg shadow-md">
               <thead className="bg-gray-100">
                 <tr>
-                  <th className="border border-gray-300 p-2">
-                    <input
-                      type="checkbox"
-                      onChange={() => {
-                        if (selectedBooks.size === totalItems) {
-                          setSelectedBooks(new Set());
-                        } else {
-                          setSelectedBooks(
-                            new Set(filteredBooks.map((book) => book.book_id))
-                          );
-                        }
-                      }}
-                      checked={selectedBooks.size === totalItems}
-                    />
-                  </th>
+                 
                   <th
                     className="border border-gray-300 p-2 cursor-pointer"
                     onClick={() => handleSort("book_id")}
                   >
                     Book ID
-                    {sortKey === "book_id" && (
-                      <span>{sortDirection === "asc" ? " ▲" : " ▼"}</span>
-                    )}
+                    
                   </th>
                   <th className="border border-gray-300 p-2">Image</th>
                   <th
@@ -297,19 +282,13 @@ const BooksPage = () => {
               <tbody>
                 {currentItems.map((book) => (
                   <tr key={book.book_id}>
-                    <td className="border border-gray-300 p-2">
-                      <input
-                        type="checkbox"
-                        checked={selectedBooks.has(book.book_id)}
-                        onChange={() => handleCheckboxChange(book.book_id)}
-                      />
-                    </td>
+                    
                     <td className="border border-gray-300 p-2">
                       {book.book_id}
                     </td>
                     <td className="border border-gray-300 p-2">
                       <img
-                        src={book.image || "https://via.placeholder.com/50"} // Use actual book image if available
+                        src={'http://localhost:5000'+book.imageUrl || "https://via.placeholder.com/50"} // Use actual book image if available
                         alt={book.title}
                         className="w-12 h-12 object-cover rounded-md"
                       />
@@ -344,12 +323,7 @@ const BooksPage = () => {
                         <FaTrash size={20} />
                       </button>
                       <br />
-                      <Link
-                        to={`/book-details/${book.book_id}`}
-                        className="text-blue-500 hover:underline"
-                      >
-                        Show Details
-                      </Link>
+                      
                     </td>
                   </tr>
                 ))}

@@ -8,6 +8,16 @@ import EditBookPage from './pages/EditBookPage';
 import BookDetailsPage from './pages/BookDetailsPage';
 import AddBookPage from './pages/AddBookPage';
 
+
+
+const NotFound = () => {
+  return (
+    <>
+    <h1 > 404-Page not found</h1>
+    <p> Sorry, the page could not be found</p>
+    </>
+  );
+};
 function App() {
   return (
     <Routes>
@@ -19,6 +29,7 @@ function App() {
         <Route path="/edit-book/:id" element={<EditBookPage />} />
        <Route path="/book-details/:id" element={<BookDetailsPage />} />
        <Route path="/add-book" element={<AddBookPage />} />
+       <Route path="*" element={<NotFound />} />
 
     </Routes>
   );

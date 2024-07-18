@@ -13,7 +13,7 @@ const AuthorsPage = () => {
   const [editAuthor, setEditAuthor] = useState(null); // State to hold author being edited
   const [alert, setAlert] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [authorsPerPage] = useState(8); // Number of authors to display per page
+  const [authorsPerPage] = useState(6); // Number of authors to display per page
 
   // Fetch authors from API
   const fetchAuthors = async () => {
